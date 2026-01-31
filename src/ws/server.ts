@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket as WsWebSocket } from 'ws';
 import type { Server } from 'http';
-import {Matches} from '../validation/matches'
+import  type {Matches} from '../validation/matches'
 import {clearInterval} from "node:timers";
 
 interface WsPayload {
