@@ -59,9 +59,9 @@ export function attachWebSocketServer(server:Server) {
                     if (extWs.isActive === false) {
                            ws.terminate();
                             return;
-                       }
-            +        extWs.isActive = false;
-            +        ws.ping();
+                       };
+                   extWs.isActive = false;
+                   ws.ping();
         });
     },30000);
 
