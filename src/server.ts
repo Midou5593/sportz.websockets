@@ -1,4 +1,5 @@
 import express,{Request,Response} from 'express';
+import {matchRouter} from "./routes/matches";
 
 const app = express();
 const PORT = 8000;
@@ -10,6 +11,8 @@ app.use(express.json());
 app.get('/', (req:Request, res:Response) => {
   res.json({ message: 'Welcome to the API!' });
 });
+
+app.use('/matches',matchRouter);
 
 // Start server
 app.listen(PORT, () => {
