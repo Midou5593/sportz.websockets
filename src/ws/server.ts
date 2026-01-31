@@ -53,9 +53,15 @@ export function attachWebSocketServer(server:Server) {
     const interval = setInterval(() => {
         wss.clients.forEach((ws) => {
             const extWs = ws as WebSocket;
-            if (extWs.isActive === false) return ws.terminate();
-            extWs.isActive = false;
-            extWs.ping();
+            if (ws.readyState !== WsWebSocket.OPEN) {
+                            return;
+                        }
+                    if (extWs.isActive === false) {
+                           ws.terminate();
+                            return;
+                       }
+            +        extWs.isActive = false;
+            +        ws.ping();
         });
     },30000);
 
