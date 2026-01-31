@@ -12,6 +12,9 @@ type MatchLike = {
 type UpdateStatusFn = (status: MatchStatus) => Promise<void>;
 
 export function getMatchStatus(startTime:Date | string, endTime:Date | string, now = new Date()) : MatchStatus | null {
+    if (startTime == null || endTime == null) {
+                return null;
+           }
     const start = new Date(startTime);
     const end = new Date(endTime);
 
