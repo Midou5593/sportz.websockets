@@ -37,64 +37,7 @@ function broadcast(wss: WebSocketServer,payload:WsPayload) {
 
 
 
-// export function attachWebSocketServer1(server:Server) {
 
-//     const wss = new WebSocketServer({
-//         server,
-//         path:'/ws',
-//         maxPayload: 1024 * 1024,
-//     });
-
-//     wss.on('connection', async (socket :WebSocket,req:IncomingMessage) => {
-//         if (wsArcjet){
-//             try {
-//                 const decision = await wsArcjet.protect(req);
-
-//                 if (decision.isDenied()) {
-//                     const  code = decision.reason.isRateLimit() ? 1013 :1008;
-//                     const reason = decision.reason.isRateLimit() ? 'Rate limit exceeded' :'Access Denied';
-//                     socket.close(code, reason);
-//                     return;
-//                 }
-//             }catch (e) {
-//                 console.error('WS Connection Error:', e);
-//                 socket.close( 1011,'Server Security Error');
-//                 return;
-//             }
-//         }
-//         socket.isActive = true;
-//         socket.on('pong', (data) => {
-//             socket.isActive = true;
-//         })
-//         sendJson(socket,{type:'welcome'});
-
-//         socket.on('error', (err:Error) => {
-//             console.error(err);
-//         })
-//     });
-//     const interval = setInterval(() => {
-//         wss.clients.forEach((ws) => {
-//             const extWs = ws as WebSocket;
-//             if (ws.readyState !== WsWebSocket.OPEN) {
-//                             return;
-//                         }
-//                     if (extWs.isActive === false) {
-//                            ws.terminate();
-//                             return;
-//                        };
-//                    extWs.isActive = false;
-//                    ws.ping();
-//         });
-//     },30000);
-
-//     wss.on('close', () => clearInterval(interval));
-
-//     function broadcastMatchCreated(match:Matches) {
-//         broadcast(wss,{type:'match_created',data:match});
-//     }
-
-//     return {broadcastMatchCreated};
-// }
 
 
 
@@ -148,7 +91,8 @@ export function attachWebSocketServer(server:Server) {
             try {
                 const message = JSON.parse(data.toString());
                 // Handle different message types here
-                console.log('Received message:', message);
+               // console.log('Received message:', message);
+                 // TODO: Implement message type handlers (e.g., subscribe/unsubscribe)
             } catch (e) {
                 console.error('Invalid message format:', e);
             }
