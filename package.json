@@ -14,6 +14,8 @@
     "db:push": "drizzle-kit push:pg"
   },
   "dependencies": {
+    "@arcjet/inspect": "^1.0.0",
+    "@arcjet/node": "^1.0.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.30.10",
     "express": "^5.2.1",

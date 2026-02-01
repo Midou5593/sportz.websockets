@@ -2,6 +2,9 @@ import { WebSocketServer, WebSocket as WsWebSocket } from 'ws';
 import type { Server } from 'http';
 import  type {Matches} from '../validation/matches'
 import {clearInterval} from "node:timers";
+import {wsArcjet} from "../arcjet";
+
+import type { IncomingMessage } from "http";
 
 interface WsPayload {
     type: string;
@@ -10,7 +13,8 @@ interface WsPayload {
 
 // Create a custom type that extends WebSocket
 type WebSocket = WsWebSocket & {
-    isActive: boolean;
+    isAlive: boolean;
+    subscriptions: Set<string>;
 };
 
 
@@ -31,45 +35,106 @@ function broadcast(wss: WebSocketServer,payload:WsPayload) {
     }
 }
 
+
+
+
+
+
+
+
 export function attachWebSocketServer(server:Server) {
+    const wss = new WebSocketServer({ noServer: true, path: '/ws', maxPayload: 1024 * 1024 });
 
-    const wss = new WebSocketServer({
-        server,
-        path:'/ws',
-        maxPayload: 1024 * 1024,
+    server.on('upgrade', async (req, socket, head) => {
+        const { pathname } = new URL(req.url || '/', `http://${req.headers.host}`);
+
+        if (pathname !== '/ws') {
+            return;
+        }
+
+        if (wsArcjet) {
+            try {
+                const decision = await wsArcjet.protect(req);
+
+                if (decision.isDenied()) {
+                    if (decision.reason.isRateLimit()) {
+                        socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n');
+                    } else {
+                        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                    }
+                    socket.destroy();
+                    return;
+                }
+            } catch (e) {
+                console.error('WS upgrade protection error', e);
+                socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+                socket.destroy();
+                return;
+            }
+        }
+
+        wss.handleUpgrade(req, socket, head, (ws) => {
+            wss.emit('connection', ws, req);
+        });
     });
 
-    wss.on('connection', (socket :WebSocket) => {
-        socket.isActive = true;
-        socket.on('pong', (data) => {
-            socket.isActive = true;
-        })
-        sendJson(socket,{type:'welcome'});
+    wss.on('connection', (socket:WebSocket, req) => {
 
-        socket.on('error', (err:Error) => {
-            console.error(err);
+        socket.isAlive = true;
+        socket.on('pong', () => { socket.isAlive = true; });
+
+        socket.subscriptions = new Set();
+
+        sendJson(socket, { type: 'welcome' });
+
+        socket.on('message', (data) => {
+            try {
+                const message = JSON.parse(data.toString());
+                // Handle different message types here
+               // console.log('Received message:', message);
+                 // TODO: Implement message type handlers (e.g., subscribe/unsubscribe)
+            } catch (e) {
+                console.error('Invalid message format:', e);
+            }
+        });
+
+        socket.on('error', () => {
+             console.error('WebSocket error occurred');
+            socket.terminate();
+        });
+
+        socket.on('close', () => {
+            socket.subscriptions.clear();
         })
+
+       
     });
+
     const interval = setInterval(() => {
         wss.clients.forEach((ws) => {
             const extWs = ws as WebSocket;
-            if (ws.readyState !== WsWebSocket.OPEN) {
-                            return;
-                        }
-                    if (extWs.isActive === false) {
-                           ws.terminate();
-                            return;
-                       };
-                   extWs.isActive = false;
-                   ws.ping();
-        });
-    },30000);
+            if (extWs.isAlive === false) return ws.terminate();
+
+            extWs.isAlive = false;
+            ws.ping();
+        })}, 30000);
 
     wss.on('close', () => clearInterval(interval));
 
-    function broadcastMatchCreated(match:Matches) {
-        broadcast(wss,{type:'match_created',data:match});
+    function broadcastMatchCreated(match: Matches) {
+        broadcast(wss, { type: 'match_created', data: match });
     }
 
-    return {broadcastMatchCreated};
+    function broadcastCommentary(matchId: string, comment: unknown) {
+        // Broadcast commentary to all clients subscribed to this match
+        wss.clients.forEach((client) => {
+            const extClient = client as WebSocket;
+            if (extClient.subscriptions.has(matchId) && client.readyState === WsWebSocket.OPEN) {
+               
+                 sendJson(extClient, { type: 'commentary', data: { matchId, comment } });
+            }
+        });
+    }
+
+    return { broadcastMatchCreated, broadcastCommentary };
 }

@@ -4,6 +4,7 @@ import express,{Request,Response} from 'express';
 import {matchRouter} from "./routes/matches";
 import * as http from "node:http";
 import {attachWebSocketServer} from "./ws/server";
+import {securityMiddleware} from "./arcjet";
 
 
 const PORT = Number(process.env.PORT || 8000);
@@ -13,11 +14,13 @@ const app = express();
 const server = http.createServer(app);
 // Middleware (read json context)
 app.use(express.json());
+app.use(securityMiddleware());
 
 // Root GET route
 app.get('/', (req:Request, res:Response) => {
   res.json({ message: 'Welcome to the API!' });
 });
+
 
 app.use('/matches',matchRouter);
 
