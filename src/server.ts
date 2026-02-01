@@ -14,13 +14,14 @@ const app = express();
 const server = http.createServer(app);
 // Middleware (read json context)
 app.use(express.json());
+app.use(securityMiddleware());
 
 // Root GET route
 app.get('/', (req:Request, res:Response) => {
   res.json({ message: 'Welcome to the API!' });
 });
 
-app.use(securityMiddleware());
+
 app.use('/matches',matchRouter);
 
 // broadcast

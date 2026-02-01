@@ -3,7 +3,8 @@ import type { Server } from 'http';
 import  type {Matches} from '../validation/matches'
 import {clearInterval} from "node:timers";
 import {wsArcjet} from "../arcjet";
-import {Request, Response} from "express";
+
+import type { IncomingMessage } from "http";
 
 interface WsPayload {
     type: string;
@@ -41,7 +42,7 @@ export function attachWebSocketServer(server:Server) {
         maxPayload: 1024 * 1024,
     });
 
-    wss.on('connection', async (socket :WebSocket,req:Request) => {
+    wss.on('connection', async (socket :WebSocket,req:IncomingMessage) => {
         if (wsArcjet){
             try {
                 const decision = await wsArcjet.protect(req);
