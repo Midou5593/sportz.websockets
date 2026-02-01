@@ -2,6 +2,8 @@ import { WebSocketServer, WebSocket as WsWebSocket } from 'ws';
 import type { Server } from 'http';
 import  type {Matches} from '../validation/matches'
 import {clearInterval} from "node:timers";
+import {wsArcjet} from "../arcjet";
+import {Request, Response} from "express";
 
 interface WsPayload {
     type: string;
@@ -39,7 +41,23 @@ export function attachWebSocketServer(server:Server) {
         maxPayload: 1024 * 1024,
     });
 
-    wss.on('connection', (socket :WebSocket) => {
+    wss.on('connection', async (socket :WebSocket,req:Request) => {
+        if (wsArcjet){
+            try {
+                const decision = await wsArcjet.protect(req);
+
+                if (decision.isDenied()) {
+                    const  code = decision.reason.isRateLimit() ? 1013 :1008;
+                    const reason = decision.reason.isRateLimit() ? 'Rate limit exceeded' :'Access Denied';
+                    socket.close(code, reason);
+                    return;
+                }
+            }catch (e) {
+                console.error('WS Connection Error:', e);
+                socket.close( 1011,'Server Security Error');
+                return;
+            }
+        }
         socket.isActive = true;
         socket.on('pong', (data) => {
             socket.isActive = true;
