@@ -64,7 +64,7 @@ export function securityMiddleware(){
                error:'Forbidden',
             })
         }
-        //next();
+     
     }catch (e) {
         console.error(`Arcjet middleware error: ${e}`);
         return  res.status(503).json({

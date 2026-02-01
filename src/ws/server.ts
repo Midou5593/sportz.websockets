@@ -13,7 +13,6 @@ interface WsPayload {
 
 // Create a custom type that extends WebSocket
 type WebSocket = WsWebSocket & {
-    isActive: boolean;
     isAlive: boolean;
     subscriptions: Set<string>;
 };
@@ -136,7 +135,7 @@ export function attachWebSocketServer(server:Server) {
         });
     });
 
-    wss.on('connection', async (socket:WebSocket, req) => {
+    wss.on('connection', (socket:WebSocket, req) => {
 
         socket.isAlive = true;
         socket.on('pong', () => { socket.isAlive = true; });
