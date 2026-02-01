@@ -99,6 +99,7 @@ export function attachWebSocketServer(server:Server) {
         });
 
         socket.on('error', () => {
+             console.error('WebSocket error occurred');
             socket.terminate();
         });
 
@@ -106,7 +107,7 @@ export function attachWebSocketServer(server:Server) {
             socket.subscriptions.clear();
         })
 
-        socket.on('error', console.error);
+       
     });
 
     const interval = setInterval(() => {
@@ -129,7 +130,8 @@ export function attachWebSocketServer(server:Server) {
         wss.clients.forEach((client) => {
             const extClient = client as WebSocket;
             if (extClient.subscriptions.has(matchId) && client.readyState === WsWebSocket.OPEN) {
-                sendJson(extClient, { type: 'commentary', data: comment });
+               
+                 sendJson(extClient, { type: 'commentary', data: { matchId, comment } });
             }
         });
     }
